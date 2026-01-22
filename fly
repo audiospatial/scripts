@@ -1,0 +1,6 @@
+loadstring(game:HttpGet("https://raw.githubusercontent.com/TheRealXORA/Roblox/refs/heads/Main/Scripts%20/Universal%20/Fly.luau", true))() 
+Fly.Keybinds.Fly = "P" or "ButtonA" 
+Fly.Keybinds.Hide = "O" or "ButtonB" 
+Fly.Keybinds.Remove = "L" or "ButtonC" 
+Fly.NoGravity = true 
+Fly.LookAt = true
