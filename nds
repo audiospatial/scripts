@@ -1,0 +1,365 @@
+
+local player = game.Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local humanoid : Humanoid = character:WaitForChild("Humanoid")
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+
+-- Создаём GUI только если его ещё нет
+local gui = player:WaitForChild("PlayerGui"):FindFirstChild("CustomGui")
+if not gui then
+    gui = Instance.new("ScreenGui")
+    gui.Name = "CustomGui"
+    gui.Parent = player:WaitForChild("PlayerGui")
+end
+
+local f = Instance.new("Frame", gui)
+f.Size = UDim2.new(0, 458, 0, 310)
+f.BackgroundColor3 = Color3.new(0, 0, 0)
+f.BorderColor3 = Color3.new(1, 0, 0)
+f.BorderSizePixel = 2
+f.Position = UDim2.new(0.5, -229, 0.5, -155) -- центр экрана
+
+-- Функция для перетаскивания Frame мышью (локальная обработка)
+local function makeDraggable(frame)
+    local dragging = false
+    local dragStart = nil
+    local startPos = nil
+    local inputConn = nil
+    local endConn = nil
+
+    frame.Active = true
+    frame.Selectable = true
+
+    frame.MouseEnter:Connect(function()
+        frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    end)
+
+    frame.MouseLeave:Connect(function()
+        frame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+    end)
+
+    frame.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = true
+            dragStart = UserInputService:GetMouseLocation()
+            startPos = frame.Position
+
+            -- Локальный обработчик движения мыши
+            inputConn = UserInputService.InputChanged:Connect(function(moveInput)
+                if moveInput.UserInputType == Enum.UserInputType.MouseMovement and dragging then
+                    local delta = UserInputService:GetMouseLocation() - dragStart
+                    frame.Position = UDim2.new(
+                        startPos.X.Scale,
+                        startPos.X.Offset + delta.X,
+                        startPos.Y.Scale,
+                        startPos.Y.Offset + delta.Y
+                    )
+                end
+            end)
+
+            -- Локальный обработчик окончания drag
+            endConn = frame.InputEnded:Connect(function(endInput)
+                if endInput.UserInputType == Enum.UserInputType.MouseButton1 then
+                    dragging = false
+                    if inputConn then
+                        inputConn:Disconnect()
+                        inputConn = nil
+                    end
+                    if endConn then
+                        endConn:Disconnect()
+                        endConn = nil
+                    end
+                end
+            end)
+        end
+    end)
+end
+makeDraggable(f)
+
+local function setbutton(button)
+    button.BackgroundColor3 = Color3.new(0, 0, 0)
+    button.BorderColor3 = Color3.new(1,0,0)
+    button.BorderSizePixel = 2
+    button.TextColor3 = Color3.new(1,1,1)
+    button.TextScaled = true
+end
+
+local grid = Instance.new("UIGridLayout", f)
+grid.CellSize = UDim2.new(0, 120, 0, 50)
+
+--EGOR
+
+local egorb = Instance.new("TextButton", f)
+egorb.Text = "Egor : Off"
+local egor = false
+setbutton(egorb)
+egorb.MouseButton1Click:Connect(function()
+    egor = not egor
+    if egor then
+        egorb.Text = "Egor : On"
+    else
+        egorb.Text = "Egor : Off"
+        if character:FindFirstChild("HumanoidRootPart") then
+            local hrp = character.HumanoidRootPart
+            hrp.Anchored = false
+            hrp.Velocity = Vector3.new(0,0,0)
+            hrp.RotVelocity = Vector3.new(0,0,0)
+            character.Humanoid.WalkSpeed = 16
+        end
+    end
+end)
+
+-- Логика полёта через Heartbeat (без изменения CFrame)
+RunService.Heartbeat:Connect(function()
+	if egor and character:FindFirstChild("HumanoidRootPart") then
+		local hrp = character.HumanoidRootPart
+		hrp.Velocity = hrp.CFrame.LookVector * 100
+		hrp.RotVelocity = Vector3.new(0, 100, 0)
+		hrp.Anchored = true
+		--move foward by -2 and rotation is camera rotation
+		local camera = game.Workspace.CurrentCamera
+		hrp.CFrame = CFrame.new(hrp.Position, hrp.Position + Vector3.new(camera.CFrame.LookVector.X, camera.CFrame.LookVector.Y, camera.CFrame.LookVector.Z)) * CFrame.new(0,0,-0.1)
+	end
+end)
+
+
+--HERO
+
+local herob = Instance.new("TextButton", f)
+herob.Text = "Hero : Off"
+setbutton(herob)
+local hero = false
+herob.MouseButton1Click:Connect(function()
+	hero = not hero
+	if hero then
+		herob.Text = "Hero : On"
+	else
+		herob.Text = "Hero : Off"
+		if character:FindFirstChild("HumanoidRootPart") then
+			local hrp = character.HumanoidRootPart
+			hrp.Anchored = false
+			hrp.Velocity = Vector3.new(0,0,0)
+			hrp.RotVelocity = Vector3.new(0,0,0)
+			character.Humanoid.WalkSpeed = 16
+		end
+	end
+end)
+
+RunService.Heartbeat:Connect(function()
+	if hero and character:FindFirstChild("HumanoidRootPart") then
+		local hrp = character.HumanoidRootPart
+		hrp.Anchored = true
+		--move foward by -2 and rotation is camera rotation
+		local camera = game.Workspace.CurrentCamera
+		hrp.CFrame = CFrame.new(hrp.Position, hrp.Position + Vector3.new(camera.CFrame.LookVector.X, camera.CFrame.LookVector.Y, camera.CFrame.LookVector.Z))
+			* CFrame.new(0,0,-0.2)
+			* CFrame.Angles(camera.CFrame.LookVector.X, camera.CFrame.LookVector.Y, 0)
+	end
+end)
+
+local bsb = Instance.new("TextButton", f)
+bsb.Text = "BigSpeed : Off"
+setbutton(bsb)
+local bs = false
+bsb.MouseButton1Click:Connect(function()
+	bs = not bs
+	if bs then
+		bsb.Text = "BigSpeed : On"
+		humanoid.WalkSpeed = 30
+	else
+		bsb.Text = "BigSpeed : Off"
+		humanoid.WalkSpeed = 16
+	end
+end)
+
+local fb = Instance.new("TextButton", f)
+fb.Text = "Fling : Off"
+setbutton(fb)
+local fling = false
+fb.MouseButton1Click:Connect(function()
+	fling = not fling
+	if fling then
+		fb.Text = "Fling : On"
+	else
+		fb.Text = "Fling : Off"
+	end
+end)
+
+RunService.Heartbeat:Connect(function()
+	if fling and character:FindFirstChild("HumanoidRootPart") then
+		local hrp = character.HumanoidRootPart
+		hrp.CFrame = hrp.CFrame * CFrame.Angles(0, math.rad(90), 0)
+	end
+end)
+
+local lowgravvityb = Instance.new("TextButton", f)
+lowgravvityb.Text = "LowGravity : Off"
+setbutton(lowgravvityb)
+local lg = false
+lowgravvityb.MouseButton1Click:Connect(function()
+	lg = not lg
+	if lg then
+		lowgravvityb.Text = "LowGravity : On"
+		workspace.Gravity = 10
+	else
+		lowgravvityb.Text = "LowGravity : Off"
+		workspace.Gravity = 196.2
+	end
+end)
+
+local part
+local record = 0
+local djb = Instance.new("TextButton", f)
+djb.Text = "DoubleJump : Off"
+setbutton(djb)
+local dj = false
+djb.MouseButton1Click:Connect(function()
+	dj = not dj
+	if dj then
+		djb.Text = "DoubleJump : On"
+		part = Instance.new("Part", workspace)
+		part.Size = Vector3.new(10,1,10)
+		part.Anchored = true
+		if character:FindFirstChild("HumanoidRootPart") then
+			record = character.HumanoidRootPart.Position.Y
+		end
+	else
+		djb.Text = "DoubleJump : Off"
+		part:Destroy()
+	end
+end)
+RunService.Heartbeat:Connect(function()
+	if dj and character:FindFirstChild("HumanoidRootPart") then
+		if character.HumanoidRootPart.Position.Y >= record then
+			record = character.HumanoidRootPart.Position.Y
+			part.Position = Vector3.new(character.HumanoidRootPart.Position.X,record-5,character.HumanoidRootPart.Position.Z)
+		else
+			part.Position = Vector3.new(character.HumanoidRootPart.Position.X,character.HumanoidRootPart.Position.Y-5,character.HumanoidRootPart.Position.Z)
+		end
+		
+	end
+end)
+
+local part
+local record = 0
+local platformb = Instance.new("TextButton", f)
+platformb.Text = "Platform : Off"
+setbutton(platformb)
+local platform = false
+platformb.MouseButton1Click:Connect(function()
+	platform = not platform
+	if platform then
+		platformb.Text = "Platform : On"
+		part = Instance.new("Part", workspace)
+		part.Size = Vector3.new(10,1,10)
+		part.Anchored = true
+		if character:FindFirstChild("HumanoidRootPart") then
+			record = character.HumanoidRootPart.Position.Y
+		end
+	else
+		platformb.Text = "Platform : Off"
+		part:Destroy()
+	end
+end)
+RunService.Heartbeat:Connect(function()
+	if platform and character:FindFirstChild("HumanoidRootPart") then
+		if character.HumanoidRootPart.Position.Y >= record then
+			record = character.HumanoidRootPart.Position.Y
+		end
+		part.Position = Vector3.new(character.HumanoidRootPart.Position.X,record-5,character.HumanoidRootPart.Position.Z)
+	end
+end)
+
+local carb = Instance.new("TextButton", f)
+carb.Text = "Car : Off"
+local speed = 0
+local tween = game:GetService("TweenService")
+local needspeed = 0
+setbutton(carb)
+local car = false
+carb.MouseButton1Click:Connect(function()
+	car = not car
+	if car then
+		carb.Text = "Car : On"
+		humanoid.JumpPower = 0
+	else
+		carb.Text = "Car : Off"
+		humanoid.Sit = false
+		humanoid.JumpPower = 50
+	end
+end)
+
+RunService.Heartbeat:Connect(function()
+	if car and character:FindFirstChild("HumanoidRootPart") then
+		humanoid.Sit = true
+		local hrp = character.HumanoidRootPart
+		if UserInputService:IsKeyDown(Enum.KeyCode.W) then
+			needspeed = 100
+			if speed < needspeed then speed += 1 end
+			hrp.Velocity = hrp.CFrame.LookVector * speed
+		elseif UserInputService:IsKeyDown(Enum.KeyCode.S) then
+			needspeed = -100
+			if speed > needspeed then speed -= 1 end
+			hrp.Velocity = hrp.CFrame.LookVector * speed
+		else
+			needspeed = 0
+			speed = 0
+			hrp.Velocity = Vector3.new(0,0,0)
+		end
+		--Поворот машины за камерой
+		local camera = workspace.CurrentCamera
+		-- Поворот машины за камерой по горизонтали
+		local look = camera.CFrame.LookVector
+		local lookXZ = Vector3.new(look.X, 0, look.Z)
+		if lookXZ.Magnitude > 0.01 then
+			hrp.CFrame = CFrame.new(hrp.Position, hrp.Position + lookXZ)
+		end
+	end
+end)
+
+local mwb = Instance.new("TextButton", f)
+mwb.Text = "Microwave : Off"
+local mw = false
+setbutton(mwb)
+mwb.MouseButton1Click:Connect(function()
+	mw = not mw
+	if mw then
+		mwb.Text = "Microwave : On"
+		humanoid.JumpPower = 0
+	else
+		mwb.Text = "Microwave : Off"
+		humanoid.Sit = false
+		humanoid.JumpPower = 50
+	end
+end)
+
+RunService.Heartbeat:Connect(function()
+	if mw and character:FindFirstChild("HumanoidRootPart") then
+		humanoid.Sit = true
+		local hrp = character.HumanoidRootPart
+		hrp.Velocity = character.HumanoidRootPart.CFrame.LookVector * 100
+		local camera = workspace.CurrentCamera
+		hrp.CFrame = hrp.CFrame * CFrame.Angles(0, camera.CFrame.LookVector.Y, 0)
+	end
+end)
+
+--CREDITS
+local credits = Instance.new("TextLabel", gui)
+credits.Text = "CHEEDABOB NDS HUB"
+credits.BackgroundTransparency = 1
+credits.TextColor3 = Color3.new(1,1,1)
+credits.TextScaled = true
+credits.Size = UDim2.new(0, 300, 0, 50)
+local gradient = Instance.new("UIGradient", credits)
+--white to gray
+gradient.Color = ColorSequence.new({
+	ColorSequenceKeypoint.new(0, Color3.new(1,1,1)),
+	ColorSequenceKeypoint.new(1, Color3.new(0.5,0.5,0.5)),
+})
+gradient.Rotation = 90
+local stroke = Instance.new("UIStroke", credits)
+stroke.Thickness = 5
+RunService.RenderStepped:Connect(function()
+	credits.Position = f.Position + UDim2.new(0, 0, -0.1, 0)
+end)
