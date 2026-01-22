@@ -1,0 +1,134 @@
+local speaker = game.Players.LocalPlayer
+if not speaker then return end
+
+
+local tool = Instance.new("Tool")
+tool.Name = "jerk off"
+tool.ToolTip = "KHEN.CC!"
+tool.RequiresHandle = false
+local toolClone = tool:Clone()
+tool.Parent = speaker:WaitForChild("Backpack")
+
+local jorkin = false
+local track = nil
+local nameGui = nil
+local lastPosition = nil
+
+-- Cập nhật humanoid khi nhân vật thay đổi
+local humanoid = speaker.Character and speaker.Character:FindFirstChildWhichIsA("Humanoid")
+local function updateHumanoid()
+    if speaker.Character then
+        humanoid = speaker.Character:WaitForChild("Humanoid")
+    end
+end
+if not humanoid then updateHumanoid() end
+if not humanoid then return end
+
+
+local function stopTomfoolery()
+    jorkin = false
+    if track then
+        track:Stop()
+        track = nil
+    end
+    if nameGui then
+        nameGui:Destroy()
+        nameGui = nil
+    end
+    lastPosition = nil
+end
+
+local function isR15(character)
+    return character:FindFirstChildOfClass("Humanoid").RigType == Enum.HumanoidRigType.R15
+end
+
+local function playAnimation()
+    if not jorkin then return end
+    
+    local isR15Model = isR15(speaker.Character)
+    if not track then
+        local anim = Instance.new("Animation")
+        anim.AnimationId = isR15Model and "rbxassetid://698251653" or "rbxassetid://72042024"
+        
+        local animator = humanoid:FindFirstChildOfClass("Animator") or humanoid:FindFirstChildWhichIsA("AnimationController")
+        if not animator then
+            animator = Instance.new("Animator")
+            animator.Parent = humanoid
+        end
+        
+        track = animator:LoadAnimation(anim)
+    end
+
+    if track then
+        track:Play()
+        track:AdjustSpeed(isR15Model and 0.7 or 0.65)
+        track.TimePosition = 0.6
+        
+        while track and track.IsPlaying and track.TimePosition < (isR15Model and 0.65 or 0.7) do
+            task.wait(0.1)
+        end
+        
+        track:Stop()
+        track = nil
+    end
+end
+
+
+
+
+local function showToolName()
+    if not speaker.Character then return end
+    local head = speaker.Character:FindFirstChild("Head")
+    if not head then return end
+
+    nameGui = Instance.new("BillboardGui")
+    nameGui.Parent = head
+    nameGui.Size = UDim2.new(4, 0, 1, 0)
+    nameGui.StudsOffset = Vector3.new(0, 3, 0)
+    nameGui.AlwaysOnTop = true
+
+    local textLabel = Instance.new("TextLabel")
+    textLabel.Parent = nameGui
+    textLabel.Size = UDim2.new(1, 0, 1, 0)
+    textLabel.BackgroundTransparency = 1
+    textLabel.Text = "fuck u nigga"
+    textLabel.TextColor3 = Color3.new(1, 1, 1)
+    textLabel.TextScaled = true
+    textLabel.Font = Enum.Font.GothamBlack
+end
+
+speaker.CharacterAdded:Connect(function(character)
+    updateHumanoid()
+    local backpack = speaker:WaitForChild("Backpack")
+    task.wait(0.1)
+    if not backpack:FindFirstChild("jerk off") then
+        local newTool = toolClone:Clone()
+        newTool.Parent = backpack
+        newTool.Equipped:Connect(function()
+            jorkin = true
+            showToolName()
+        end)
+        newTool.Unequipped:Connect(stopTomfoolery)
+        newTool.Activated:Connect(function()
+            if jorkin then
+                playAnimation()
+            end
+        end)
+    end
+end)
+
+tool.Equipped:Connect(function()
+    jorkin = true
+    showToolName() 
+end)
+
+tool.Unequipped:Connect(stopTomfoolery)
+humanoid.Died:Connect(stopTomfoolery)
+
+tool.Activated:Connect(function()
+    if jorkin then
+        playAnimation()
+    end
+end)
+
+print("khen.cc")
